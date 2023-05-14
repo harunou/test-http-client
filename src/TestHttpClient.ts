@@ -87,7 +87,7 @@ export class TestHttpClient {
         const foundPendingRequests = this.pendingRequests.filter(pendingRequest => {
             const isUrlEqual = pendingRequest.request.url === url;
             const isInitEqual = init
-                ? compareTwoRequestObjects(new Request(url, init), pendingRequest.request)
+                ? simpleCompareTwoRequestObjects(new Request(url, init), pendingRequest.request)
                 : true;
             return isUrlEqual && isInitEqual;
         });
@@ -100,7 +100,7 @@ export class TestHttpClient {
     }
 }
 
-function compareTwoRequestObjects(request1: Request, request2: Request): boolean {
+function simpleCompareTwoRequestObjects(request1: Request, request2: Request): boolean {
     return (
         request1.url === request2.url &&
         request1.method === request2.method &&
