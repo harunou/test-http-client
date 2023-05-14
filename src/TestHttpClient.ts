@@ -38,6 +38,7 @@ export class TestHttpClient {
             this.pendingRequests.push(pendingRequest);
         });
     }
+
     expectOne<T>(url: string, init?: RequestInit): PendingRequest<T> {
         const foundPendingRequests = this.findPendingRequests<T>(url, init);
         const [foundPendingRequest] = foundPendingRequests;
@@ -46,6 +47,7 @@ export class TestHttpClient {
         }
         return foundPendingRequest;
     }
+
     removeOne(url: string, init?: RequestInit): void {
         const foundPendingRequests = this.findPendingRequests<unknown>(url, init);
         const [foundPendingRequest] = foundPendingRequests;
@@ -54,11 +56,29 @@ export class TestHttpClient {
         }
         this.removePendingRequests([foundPendingRequest]);
     }
+
+    expect<T>(url: string, init?: RequestInit): Array<PendingRequest<T>> {
+        const foundPendingRequests = this.findPendingRequests<T>(url, init);
+        if (!foundPendingRequests.length) {
+            throw new Error(`HttpClient: no pending requests found for the ${url}`);
+        }
+        return foundPendingRequests;
+    }
+
+    remove(url: string, init?: RequestInit): void {
+        const foundPendingRequests = this.findPendingRequests<unknown>(url, init);
+        if (!foundPendingRequests.length) {
+            throw new Error(`HttpClient: no pending requests found for the ${url}`);
+        }
+        this.removePendingRequests(foundPendingRequests);
+    }
+
     verify(): void {
         if (this.pendingRequests.length) {
             throw new Error(`HttpClient: still has pending requests`);
         }
     }
+
     clean(): void {
         this.pendingRequests = [];
     }
@@ -74,7 +94,7 @@ export class TestHttpClient {
         return foundPendingRequests as Array<PendingRequest<T>>;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Note(harunou); it is does not matter what type is here
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(harunou); it does not matter what type is here
     private removePendingRequests(pendingRequests: Array<PendingRequest<any>>): void {
         this.pendingRequests = this.pendingRequests.filter(pr => !pendingRequests.includes(pr));
     }
