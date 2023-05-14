@@ -17,11 +17,26 @@ describe(`${TestHttpClient.name}`, () => {
         const pendingRequest = httpClient.expectOne(endpoint, { method: 'POST' });
         expect(pendingRequest.request.url).toEqual(endpoint);
     });
+    it('throws an error if pending request in not found', () => {
+        expect(() => httpClient.expectOne(endpoint)).toThrow();
+    });
     it('does not remove pending request from the client with expectOne', () => {
         void httpClient.request(new Request(endpoint, { method: 'POST' }));
         const pendingRequest0 = httpClient.expectOne(endpoint, { method: 'POST' });
         const pendingRequest1 = httpClient.expectOne(endpoint, { method: 'POST' });
         expect(pendingRequest0).toEqual(pendingRequest1);
+    });
+    it('allows to find all pending request by url and init', () => {
+        void httpClient.request(new Request(endpoint, { method: 'POST' }));
+        void httpClient.request(new Request(endpoint, { method: 'POST' }));
+        const pendingRequests = httpClient.expect(endpoint, { method: 'POST' });
+        expect(pendingRequests.length).toEqual(2);
+    });
+    it('allows to delete all pending requests by url and init', () => {
+        void httpClient.request(new Request(endpoint, { method: 'POST' }));
+        void httpClient.request(new Request(endpoint, { method: 'POST' }));
+        httpClient.remove(endpoint, { method: 'POST' });
+        expect(() => httpClient.expect(endpoint, { method: 'POST' })).toThrow();
     });
     it('allows to resolve pending request', async () => {
         const resolveValue = 3;
