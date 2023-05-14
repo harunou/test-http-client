@@ -27,11 +27,11 @@ export class TestHttpClient {
             const pendingRequest: PendingRequest<T> = {
                 request,
                 resolve: (...args) => {
-                    this.removePendingRequest(pendingRequest);
+                    this.removePendingRequests([pendingRequest]);
                     resolve(...args);
                 },
                 reject: (...args) => {
-                    this.removePendingRequest(pendingRequest);
+                    this.removePendingRequests([pendingRequest]);
                     reject(...args);
                 },
             };
@@ -39,12 +39,20 @@ export class TestHttpClient {
         });
     }
     expectOne<T>(url: string, init?: RequestInit): PendingRequest<T> {
-        const foundPendingRequest = this.findPendingRequest<T>(url, init);
+        const foundPendingRequests = this.findPendingRequests<T>(url, init);
+        const [foundPendingRequest] = foundPendingRequests;
+        if (!foundPendingRequest) {
+            throw new Error(`HttpClient: no pending request found for the ${url}`);
+        }
         return foundPendingRequest;
     }
     removeOne(url: string, init?: RequestInit): void {
-        const foundPendingRequest = this.findPendingRequest<unknown>(url, init);
-        this.removePendingRequest(foundPendingRequest);
+        const foundPendingRequests = this.findPendingRequests<unknown>(url, init);
+        const [foundPendingRequest] = foundPendingRequests;
+        if (!foundPendingRequest) {
+            throw new Error(`HttpClient: no pending request found for the ${url}`);
+        }
+        this.removePendingRequests([foundPendingRequest]);
     }
     verify(): void {
         if (this.pendingRequests.length) {
@@ -55,22 +63,20 @@ export class TestHttpClient {
         this.pendingRequests = [];
     }
 
-    private findPendingRequest<T>(url: string, init?: RequestInit): PendingRequest<T> {
-        const foundPendingRequest = this.pendingRequests.find(pendingRequest => {
+    private findPendingRequests<T>(url: string, init?: RequestInit): Array<PendingRequest<T>> {
+        const foundPendingRequests = this.pendingRequests.filter(pendingRequest => {
             const isUrlEqual = pendingRequest.request.url === url;
             const isInitEqual = init
                 ? compareTwoRequestObjects(new Request(url, init), pendingRequest.request)
                 : true;
             return isUrlEqual && isInitEqual;
         });
-        if (!foundPendingRequest) {
-            throw new Error(`HttpClient: no pending request found for the ${url}`);
-        }
-        return foundPendingRequest as PendingRequest<T>;
+        return foundPendingRequests as Array<PendingRequest<T>>;
     }
 
-    private removePendingRequest<T>(pendingRequest: PendingRequest<T>): void {
-        this.pendingRequests = this.pendingRequests.filter(pr => pr !== pendingRequest);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Note(harunou); it is does not matter what type is here
+    private removePendingRequests(pendingRequests: Array<PendingRequest<any>>): void {
+        this.pendingRequests = this.pendingRequests.filter(pr => !pendingRequests.includes(pr));
     }
 }
 
