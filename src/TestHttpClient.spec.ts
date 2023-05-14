@@ -23,7 +23,7 @@ describe(`${TestHttpClient.name}`, () => {
         const pendingRequest1 = httpClient.expectOne(endpoint, { method: 'POST' });
         expect(pendingRequest0).toEqual(pendingRequest1);
     });
-    it('finds pending request and allows to resolve it', async () => {
+    it('allows to resolve pending request', async () => {
         const resolveValue = 3;
         const promise = httpClient.request<number>(new Request(endpoint));
         httpClient.expectOne<number>(endpoint).resolve(resolveValue);
@@ -35,7 +35,7 @@ describe(`${TestHttpClient.name}`, () => {
         httpClient.expectOne<number>(endpoint).resolve(resolveValue);
         expect(() => httpClient.expectOne<number>(endpoint)).toThrow();
     });
-    it('finds pending request and allows to reject it', async () => {
+    it('allows to reject pending request', async () => {
         const error = new Error('error');
         const promise = httpClient.request(new Request(endpoint));
         httpClient.expectOne(endpoint).reject(error);
