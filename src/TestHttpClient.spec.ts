@@ -7,6 +7,11 @@ describe(`${TestHttpClient.name}`, () => {
         endpoint = 'test/endpoint';
         httpClient = new TestHttpClient();
     });
+    it('creates a singleton with make command', () => {
+        const instance0 = TestHttpClient.make();
+        const instance1 = TestHttpClient.make();
+        expect(instance0).toEqual(instance1);
+    });
     it('finds pending request by url', () => {
         void httpClient.request(new Request(endpoint));
         const pendingRequest = httpClient.expectOne(endpoint);
@@ -25,6 +30,9 @@ describe(`${TestHttpClient.name}`, () => {
         const pendingRequest0 = httpClient.expectOne(endpoint, { method: 'POST' });
         const pendingRequest1 = httpClient.expectOne(endpoint, { method: 'POST' });
         expect(pendingRequest0).toEqual(pendingRequest1);
+    });
+    it('throws an error if tries to remove non existing pending request', () => {
+        expect(() => httpClient.removeOne(endpoint)).toThrow();
     });
     it('allows to find all pending request by url and init', () => {
         void httpClient.request(new Request(endpoint, { method: 'POST' }));

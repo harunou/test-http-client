@@ -6,12 +6,6 @@ export interface PendingRequest<T> {
 
 export class TestHttpClient {
     private static _instance: TestHttpClient | null = null;
-    static get instance(): TestHttpClient {
-        if (!this._instance) {
-            throw new Error('TestHttpClient is not initialized yet');
-        }
-        return this._instance;
-    }
     static make(): TestHttpClient {
         if (!TestHttpClient._instance) {
             TestHttpClient._instance = new TestHttpClient();
