@@ -26,9 +26,13 @@
 2. Send requests using the `request<T>(request: Request): Promise<T>` method:
 
    ```typescript
-   const request = new Request('https://api.example.com/data');
-   const response = await httpClient.request<string>(request);
-   console.log(response);
+   it('allows to resolve pending request', async () => {
+       const endpoint = 'https://api.example.com/data';
+       const resolveValue = 3;
+       const promise = httpClient.request<number>(new Request(endpoint));
+       httpClient.expectOne<number>(endpoint).resolve(resolveValue);
+       await expect(promise).resolves.toEqual(resolveValue);
+    });
    ```
 
 3. Perform operations on pending requests:
