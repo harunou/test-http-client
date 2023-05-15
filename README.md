@@ -1,5 +1,8 @@
 # TestHttpClient
 
+[![codecov](https://codecov.io/gh/harunou/test-http-client/branch/main/graph/badge.svg?token=2R9OQJPG90)](https://codecov.io/gh/harunou/test-http-client)
+[![npm](https://img.shields.io/npm/v/test-http-client)](https://www.npmjs.com/package/test-http-client)
+
 `TestHttpClient` is a utility class that provides an emulator for an HTTP client, primarily designed for writing tests and conducting experiments involving asynchronous requests. It allows users to send requests, track pending requests, and perform various operations on them.
 
 ## Features
@@ -65,6 +68,5 @@
      ```typescript
      httpClient.clean();
      ```
-
 
 More examples in [TestHttpClient.spec.ts](./src/TestHttpClient.spec.ts)
