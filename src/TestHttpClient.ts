@@ -5,12 +5,8 @@ export interface PendingRequest<T> {
 }
 
 export class TestHttpClient {
-    private static _instance: TestHttpClient | null = null;
     static make(): TestHttpClient {
-        if (!TestHttpClient._instance) {
-            TestHttpClient._instance = new TestHttpClient();
-        }
-        return TestHttpClient._instance;
+        return new TestHttpClient();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(harunou): the array actually holds PReq of any
@@ -102,3 +98,5 @@ function simpleCompareTwoRequestObjects(request1: Request, request2: Request): b
         JSON.stringify(request1.headers) === JSON.stringify(request2.headers)
     );
 }
+
+export const testHttpClient = TestHttpClient.make();

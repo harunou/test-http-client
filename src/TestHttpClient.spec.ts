@@ -7,13 +7,6 @@ describe(`${TestHttpClient.name}`, () => {
         endpoint = 'test/endpoint';
         httpClient = new TestHttpClient();
     });
-    describe('instance', () => {
-        it('creates a singleton with make command', () => {
-            const instance0 = TestHttpClient.make();
-            const instance1 = TestHttpClient.make();
-            expect(instance0).toEqual(instance1);
-        });
-    });
     describe('singular pending request', () => {
         it('finds pending request by url', () => {
             void httpClient.request(new Request(endpoint));
