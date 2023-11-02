@@ -1,7 +1,7 @@
 import { Deferred } from '@esfx/async-deferred';
 
-type URL = string;
-type RequestMatcher = URL | Request | ((req: Request) => boolean);
+type Url = string;
+type RequestMatcher = Url | Request | ((req: Request) => boolean);
 
 export interface PendingRequest<T> {
     request: Request;
@@ -21,13 +21,13 @@ export class TestHttpClient {
         const deferred = new Deferred<T>();
         const pendingRequest: PendingRequest<T> = {
             request,
-            resolve: (...args) => {
+            resolve: value => {
                 this.removePendingRequests([pendingRequest]);
-                deferred.resolve(...args);
+                deferred.resolve(value);
             },
-            reject: (...args) => {
+            reject: reason => {
                 this.removePendingRequests([pendingRequest]);
-                deferred.reject(...args);
+                deferred.reject(reason);
             },
         };
 
@@ -36,78 +36,42 @@ export class TestHttpClient {
     }
 
     expectOne<T>(matcher: RequestMatcher): PendingRequest<T> {
-        const foundPendingRequests = this.findPendingRequests<T>(matcher);
-        const [foundPendingRequest] = foundPendingRequests;
-        if (foundPendingRequests.length > 0) {
-            throw new Error(
-                `HttpClient: found more than one pending request for the ${descriptionFromMatcher(
-                    matcher
-                )}`
-            );
-        }
-        if (!foundPendingRequest) {
-            throw new Error(
-                `HttpClient: no pending request found for the ${descriptionFromMatcher(matcher)}`
-            );
-        }
-        return foundPendingRequest;
+        return this.expectOnePendingRequest<T>(matcher);
     }
 
     removeOne(matcher: RequestMatcher): void {
-        const foundPendingRequests = this.findPendingRequests<unknown>(matcher);
-        const [foundPendingRequest] = foundPendingRequests;
-        if (foundPendingRequests.length > 0) {
-            throw new Error(
-                `HttpClient: found more than one pending request for the ${descriptionFromMatcher(
-                    matcher
-                )}`
-            );
-        }
-        if (!foundPendingRequest) {
-            throw new Error(
-                `TestHttpClient: no pending request found for the ${descriptionFromMatcher(
-                    matcher
-                )}`
-            );
-        }
-        this.removePendingRequests([foundPendingRequest]);
+        const pendingRequest = this.expectOnePendingRequest<unknown>(matcher);
+        this.removePendingRequests([pendingRequest]);
     }
 
     expect<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
-        const foundPendingRequests = this.findPendingRequests<T>(matcher);
-        if (!foundPendingRequests.length) {
+        const foundPendingRequests = this.match<T>(matcher);
+        if (foundPendingRequests.length === 0) {
             throw new Error(
-                `TestHttpClient: no pending requests found for the ${descriptionFromMatcher(
+                `TestHttpClient: expected pending requests for ${descriptionFromMatcher(
                     matcher
-                )}`
+                )}, but none were found.`
             );
         }
         return foundPendingRequests;
     }
 
     remove(matcher: RequestMatcher): void {
-        const foundPendingRequests = this.findPendingRequests<unknown>(matcher);
-        if (!foundPendingRequests.length) {
-            throw new Error(
-                `TestHttpClient: no pending requests found for the ${descriptionFromMatcher(
-                    matcher
-                )}`
-            );
-        }
+        const foundPendingRequests = this.matchPendingRequests<unknown>(matcher);
         this.removePendingRequests(foundPendingRequests);
     }
 
     match<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
-        return this.findPendingRequests<T>(matcher);
+        return this.matchPendingRequests(matcher);
     }
 
     verify(): void {
-        if (this.pendingRequests.length) {
-            const requests = this.pendingRequests
+        if (this.pendingRequests.length > 0) {
+            const descriptions = this.pendingRequests
                 .map(pendingRequest => descriptionFromMatcher(pendingRequest.request))
                 .join(', ');
             throw new Error(
-                `TestHttpClient: still has ${this.pendingRequests.length} pending requests: ${requests}`
+                `TestHttpClient: still has ${this.pendingRequests.length} pending requests: ${descriptions}`
             );
         }
     }
@@ -116,44 +80,53 @@ export class TestHttpClient {
         this.pendingRequests = [];
     }
 
-    private findPendingRequests<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
-        if (typeof matcher === 'string') {
-            return this.pendingRequests.filter(
-                pendingRequest => pendingRequest.request.url === matcher
-            ) as Array<PendingRequest<T>>;
-        } else if (typeof matcher === 'function') {
-            return this.pendingRequests.filter(pendingRequest =>
-                matcher(pendingRequest.request)
-            ) as Array<PendingRequest<T>>;
-        } else {
-            return this.pendingRequests.filter(pendingRequest =>
-                simpleRequestsComparator(matcher, pendingRequest.request)
-            ) as Array<PendingRequest<T>>;
+    private expectOnePendingRequest<T>(matcher: RequestMatcher): PendingRequest<T> {
+        const foundPendingRequests = this.match<T>(matcher);
+        if (foundPendingRequests.length !== 1) {
+            throw new Error(
+                `TestHttpClient: expected one pending request for ${descriptionFromMatcher(
+                    matcher
+                )}, but found ${foundPendingRequests.length}.`
+            );
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- NOTE(harunou): at this point we know that there is only one PReq
+        return foundPendingRequests[0]!;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(harunou); it does not matter what type is here
+    private matchPendingRequests<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
+        return this.pendingRequests.filter(pendingRequest =>
+            matches(pendingRequest.request, matcher)
+        ) as Array<PendingRequest<T>>;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(harunou): the array actually holds PReq of any
     private removePendingRequests(pendingRequests: Array<PendingRequest<any>>): void {
         this.pendingRequests = this.pendingRequests.filter(pr => !pendingRequests.includes(pr));
     }
 }
 
-function simpleRequestsComparator(request1: Request, request2: Request): boolean {
-    return (
-        request1.url === request2.url &&
-        request1.method.toUpperCase() === request2.method.toUpperCase()
-    );
+function matches(request: Request, matcher: RequestMatcher): boolean {
+    if (typeof matcher === 'string') {
+        return request.url === matcher;
+    } else if (typeof matcher === 'function') {
+        return matcher(request);
+    } else {
+        return (
+            request.url === matcher.url &&
+            request.method.toUpperCase() === matcher.method.toUpperCase()
+        );
+    }
 }
 
 function descriptionFromMatcher(matcher: RequestMatcher): string {
     if (typeof matcher === 'string') {
-        return `match URL: ${matcher}`;
-    } else if (typeof matcher === 'object') {
-        const method = matcher.method || '(any)';
-        const url = matcher.url || '(any)';
-        return `match method: ${method}, URL: ${url}`;
+        return `URL: ${matcher}`;
+    } else if (matcher instanceof Request) {
+        const method = matcher.method || 'any method';
+        const url = matcher.url || 'any url';
+        return `method: ${method}, URL: ${url}`;
     } else {
-        return `match by function: ${matcher.name}`;
+        return `function: ${matcher.name}`;
     }
 }
 
