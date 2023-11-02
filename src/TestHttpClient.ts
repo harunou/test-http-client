@@ -1,3 +1,5 @@
+import { Deferred } from '@esfx/async-deferred';
+
 export interface PendingRequest<T> {
     request: Request;
     resolve: (value: T | PromiseLike<T>) => void;
@@ -13,20 +15,21 @@ export class TestHttpClient {
     private pendingRequests: Array<PendingRequest<any>> = [];
 
     request<T>(request: Request): Promise<T> {
-        return new Promise((resolve, reject) => {
-            const pendingRequest: PendingRequest<T> = {
-                request,
-                resolve: (...args) => {
-                    this.removePendingRequests([pendingRequest]);
-                    resolve(...args);
-                },
-                reject: (...args) => {
-                    this.removePendingRequests([pendingRequest]);
-                    reject(...args);
-                },
-            };
-            this.pendingRequests.push(pendingRequest);
-        });
+        const deferred = new Deferred<T>();
+        const pendingRequest: PendingRequest<T> = {
+            request,
+            resolve: (...args) => {
+                this.removePendingRequests([pendingRequest]);
+                deferred.resolve(...args);
+            },
+            reject: (...args) => {
+                this.removePendingRequests([pendingRequest]);
+                deferred.reject(...args);
+            },
+        };
+
+        this.pendingRequests.push(pendingRequest);
+        return deferred.promise;
     }
 
     expectOne<T>(url: string, init?: RequestInit): PendingRequest<T> {

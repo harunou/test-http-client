@@ -46,6 +46,7 @@
     "@babel/core": "7.21.8",
     "@babel/preset-env": "7.21.5",
     "@babel/preset-typescript": "7.21.5",
+    "@esfx/async-deferred": "1.0.0",
     "@tsconfig/recommended": "1.0.2",
     "@tsconfig/strictest": "2.0.1",
     "@types/babel__core": "7.20.0",
