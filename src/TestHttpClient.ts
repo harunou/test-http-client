@@ -38,6 +38,13 @@ export class TestHttpClient {
     expectOne<T>(matcher: RequestMatcher): PendingRequest<T> {
         const foundPendingRequests = this.findPendingRequests<T>(matcher);
         const [foundPendingRequest] = foundPendingRequests;
+        if (foundPendingRequests.length > 0) {
+            throw new Error(
+                `HttpClient: found more than one pending request for the ${descriptionFromMatcher(
+                    matcher
+                )}`
+            );
+        }
         if (!foundPendingRequest) {
             throw new Error(
                 `HttpClient: no pending request found for the ${descriptionFromMatcher(matcher)}`
@@ -49,6 +56,13 @@ export class TestHttpClient {
     removeOne(matcher: RequestMatcher): void {
         const foundPendingRequests = this.findPendingRequests<unknown>(matcher);
         const [foundPendingRequest] = foundPendingRequests;
+        if (foundPendingRequests.length > 0) {
+            throw new Error(
+                `HttpClient: found more than one pending request for the ${descriptionFromMatcher(
+                    matcher
+                )}`
+            );
+        }
         if (!foundPendingRequest) {
             throw new Error(
                 `TestHttpClient: no pending request found for the ${descriptionFromMatcher(
@@ -81,6 +95,10 @@ export class TestHttpClient {
             );
         }
         this.removePendingRequests(foundPendingRequests);
+    }
+
+    match<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
+        return this.findPendingRequests<T>(matcher);
     }
 
     verify(): void {
