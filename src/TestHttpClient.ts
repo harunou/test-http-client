@@ -58,6 +58,13 @@ export class TestHttpClient {
 
     remove(matcher: RequestMatcher): void {
         const foundPendingRequests = this.matchPendingRequests<unknown>(matcher);
+        if (foundPendingRequests.length === 0) {
+            throw new Error(
+                `TestHttpClient: expected pending requests for ${descriptionFromMatcher(
+                    matcher
+                )}, but none were found.`
+            );
+        }
         this.removePendingRequests(foundPendingRequests);
     }
 
@@ -124,7 +131,7 @@ function descriptionFromMatcher(matcher: RequestMatcher): string {
     } else if (matcher instanceof Request) {
         const method = matcher.method || 'any method';
         const url = matcher.url || 'any url';
-        return `method: ${method}, URL: ${url}`;
+        return `method: ${method.toUpperCase()}, URL: ${url}`;
     } else {
         return `function: ${matcher.name}`;
     }
