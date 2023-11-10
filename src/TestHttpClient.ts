@@ -136,5 +136,3 @@ function descriptionFromMatcher(matcher: RequestMatcher): string {
         return `function: ${matcher.name}`;
     }
 }
-
-export const testHttpClient = TestHttpClient.make();
