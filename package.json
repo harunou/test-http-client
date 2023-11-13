@@ -1,6 +1,6 @@
 {
   "name": "test-http-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "description": "An emulator for an HTTP client designed for testing and experimentation purposes involving asynchronous requests",
   "keywords": [
