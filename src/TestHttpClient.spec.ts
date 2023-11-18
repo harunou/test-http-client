@@ -208,4 +208,21 @@ describe(`${TestHttpClient.name}`, () => {
             expect(() => httpClient.verify()).not.toThrow();
         });
     });
+
+    describe('debug', () => {
+        it('should log pending requests when debug is called', () => {
+            const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {
+                /* noop */
+            });
+
+            const request = new Request('http://example.com');
+            void httpClient.request(request);
+
+            // eslint-disable-next-line testing-library/no-debugging-utils -- NOTE(harunou): testing debug
+            httpClient.debug();
+
+            expect(consoleLogSpy).toHaveBeenCalledWith('Pending requests:', [request]);
+            consoleLogSpy.mockRestore();
+        });
+    });
 });
