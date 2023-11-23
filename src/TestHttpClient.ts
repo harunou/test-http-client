@@ -87,12 +87,8 @@ export class TestHttpClient {
         this.pendingRequests = [];
     }
 
-    debug(): void {
-        // eslint-disable-next-line no-console -- this is a debug method
-        console.log(
-            'Pending requests:',
-            this.pendingRequests.map(pr => pr.request)
-        );
+    debugRequests(): Request[] {
+        return this.pendingRequests.map(pr => pr.request);
     }
 
     private expectOnePendingRequest<T>(matcher: RequestMatcher): PendingRequest<T> {
