@@ -1,7 +1,8 @@
 import { Deferred } from '@esfx/async-deferred';
 
 type Url = string;
-type RequestMatcher = Url | Request | ((req: Request) => boolean);
+
+export type RequestMatcher = Url | Request | ((req: Request) => boolean);
 
 export interface PendingRequest<T> {
     request: Request;
