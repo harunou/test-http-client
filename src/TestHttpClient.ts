@@ -18,11 +18,11 @@ export class TestHttpClient {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- NOTE(harunou): the array actually holds PReq of any
     private pendingRequests: Array<PendingRequest<any>> = [];
 
-    request<T>(request: Request): Promise<T> {
+    request<T = undefined>(request: Request): Promise<T> {
         const deferred = new Deferred<T>();
         const pendingRequest: PendingRequest<T> = {
             request,
-            resolve: value => {
+            resolve: (value: T | PromiseLike<T>) => {
                 this.removePendingRequests([pendingRequest]);
                 deferred.resolve(value);
             },
@@ -36,7 +36,7 @@ export class TestHttpClient {
         return deferred.promise;
     }
 
-    expectOne<T>(matcher: RequestMatcher): PendingRequest<T> {
+    expectOne<T = undefined>(matcher: RequestMatcher): PendingRequest<T> {
         return this.expectOnePendingRequest<T>(matcher);
     }
 
@@ -45,7 +45,7 @@ export class TestHttpClient {
         this.removePendingRequests([pendingRequest]);
     }
 
-    expect<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
+    expect<T = undefined>(matcher: RequestMatcher): Array<PendingRequest<T>> {
         const foundPendingRequests = this.match<T>(matcher);
         if (foundPendingRequests.length === 0) {
             throw new Error(
@@ -69,7 +69,7 @@ export class TestHttpClient {
         this.removePendingRequests(foundPendingRequests);
     }
 
-    match<T>(matcher: RequestMatcher): Array<PendingRequest<T>> {
+    match<T = undefined>(matcher: RequestMatcher): Array<PendingRequest<T>> {
         return this.matchPendingRequests(matcher);
     }
 
